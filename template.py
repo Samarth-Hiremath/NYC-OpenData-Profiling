@@ -5,6 +5,14 @@ from pyspark.sql import functions as F
 from pyspark.sql.functions import isnan, when, count, col
 from dateutil.parser import parse
 
+sc = SparkContext()
+
+spark = SparkSession \
+        .builder \
+        .appName("hw3") \
+        .config("spark.some.config.option", "some-value") \
+        .getOrCreate()
+
 def log(msg):
     print("INFO: " + str(msg))
 
