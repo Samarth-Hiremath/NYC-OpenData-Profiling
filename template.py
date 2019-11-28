@@ -1,3 +1,7 @@
+import pyspark
+from pyspark import SparkContext
+
+from pyspark.sql import SparkSession
 import json
 import sys
 import pandas as pd
@@ -54,7 +58,7 @@ def get_col_name(col_name):
 def process_dataset(filename):
     # filename = "/user/hm74/NYCOpenData/2232-dj5q.tsv.gz" # TODO: Receive as argument from driver script
     log("Started processing - " + filename)
-    filename = "/user/hm74/NYCOpenData/" + filename
+    # filename = "/user/hm74/NYCOpenData/" + filename
     input_data = spark.read.format('csv').options(header='true', delimiter='\t').load(filename)
     
     json_file_data = []
