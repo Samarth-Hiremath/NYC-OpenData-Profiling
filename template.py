@@ -20,6 +20,9 @@ spark = SparkSession \
 def log(msg):
     print("INFO: " + str(msg))
 
+def logError(msg):
+    print("ERROR: " + str(msg))
+
 def check_float(val):
     try:
         float(val)
@@ -70,18 +73,18 @@ def process_dataset(filename):
     count_non_nan_vals = input_data.select([count(when(~isnan(get_col_name(column_name)), get_col_name(column_name))).alias(column_name) for column_name in input_data.columns])
     count_non_null_vals = input_data.select([count(when(col(get_col_name(column_name)).isNotNull(), get_col_name(column_name))).alias(column_name) for column_name in input_data.columns])
     
-    input_data_pd = input_data.toPandas()
-    count_distinct_vals = input_data_pd.nunique()
+    #input_data_pd = input_data.toPandas()
+    #count_distinct_vals = input_data_pd.nunique()
     
-    top_5_frequent_vals = {}
-    for column_name in input_data_pd.columns:
-        frequency_vals = input_data_pd[column_name].value_counts()
-        top_5_frequent_vals[column_name] = frequency_vals[:5].index.tolist()
+    #top_5_frequent_vals = {}
+    #for column_name in input_data_pd.columns:
+    #    frequency_vals = input_data_pd[column_name].value_counts()
+    #    top_5_frequent_vals[column_name] = frequency_vals[:5].index.tolist()
     
     for column_name in input_data.columns:
         column_data = {}
         fin_dict = {}
-        d = input_data.toPandas()[column_name]
+        d = input_data.select(column_name).toPandas()[column_name]
         col_dict = {}
         for i in d:
             if not i:
@@ -121,8 +124,8 @@ def process_dataset(filename):
         column_data["column_name"] = column_name
         column_data["number_non_empty_cells"] = int(count_non_null_vals.collect()[0][column_name])
         column_data["number_empty_cells"] = int(count_null_vals.collect()[0][column_name])
-        column_data["number_distinct_values"] = int(count_distinct_vals[column_name])
-        column_data["frequent_values"] = top_5_frequent_vals[column_name]
+        #column_data["number_distinct_values"] = int(count_distinct_vals[column_name])
+        #column_data["frequent_values"] = top_5_frequent_vals[column_name]
         column_data["data_types"] = fin_dict["data_types"]
         json_column_data.append(column_data)
     
@@ -143,14 +146,25 @@ def process_dataset(filename):
 
 
 final_merged_json = []
-with open('dataset_names.txt', 'r') as f:
+count_processed_files = 0
+with open('dataset_names_new.txt', 'r') as f:
     dataset_names = f.read().split(", ")
 
 for dataset_name in dataset_names:
     output_json = {}
-    output_json = process_dataset(dataset_name)
+    try:
+        output_json = process_dataset(dataset_name)
+    except Exception as e:
+        logError("Exception occured while processing - " + dataset_name + str(e))
+    #output_json = process_dataset(dataset_name)
     final_merged_json.append(output_json)
     log("Processed dataset - " + dataset_name)
+    count_processed_files += 1
+    if (count_processed_files == 10):
+        count_processed_files = 0
+        log("Writing json to file")
+        with open('task1.json', 'w') as out_file:
+            json.dump(final_merged_json, out_file)
 
 with open('task1.json', 'w') as out_file:
     json.dump(final_merged_json, out_file)
