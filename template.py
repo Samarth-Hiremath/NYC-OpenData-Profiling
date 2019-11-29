@@ -156,6 +156,7 @@ for dataset_name in dataset_names:
         output_json = process_dataset(dataset_name)
     except Exception as e:
         logError("Exception occured while processing - " + dataset_name + "\n" + str(e))
+        continue
     #output_json = process_dataset(dataset_name)
     final_merged_json.append(output_json)
     log("Processed dataset - " + dataset_name)
