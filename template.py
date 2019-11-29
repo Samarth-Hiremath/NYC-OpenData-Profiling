@@ -18,10 +18,10 @@ spark = SparkSession \
         .getOrCreate()
 
 def log(msg):
-    print("INFO: " + str(msg))
+    print("INFO: " + str(msg.encode(sys.stdout.encoding, 'ignore').decode()))
 
 def logError(msg):
-    print("ERROR: " + str(msg))
+    print("ERROR: " + str(msg.encode(sys.stdout.encoding, 'ignore').decode()))
 
 def check_float(val):
     try:
@@ -84,7 +84,7 @@ def process_dataset(filename):
     for column_name in input_data.columns:
         column_data = {}
         fin_dict = {}
-        d = input_data.select(column_name).toPandas()[column_name]
+        d = input_data.select(get_col_name(column_name)).toPandas()[column_name]
         col_dict = {}
         for i in d:
             if not i:
@@ -155,7 +155,7 @@ for dataset_name in dataset_names:
     try:
         output_json = process_dataset(dataset_name)
     except Exception as e:
-        logError("Exception occured while processing - " + dataset_name + str(e))
+        logError("Exception occured while processing - " + dataset_name + "\n" + str(e))
     #output_json = process_dataset(dataset_name)
     final_merged_json.append(output_json)
     log("Processed dataset - " + dataset_name)
