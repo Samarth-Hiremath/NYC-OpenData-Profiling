@@ -6,6 +6,7 @@ import json
 import sys
 import re
 from pyspark.sql import functions as F
+from pyspark.sql import Row
 from pyspark.sql.functions import isnan, when, count, col
 from dateutil.parser import parse
 
@@ -41,6 +42,10 @@ def return_data_types(val):
     elif val:
         return ("TEXT", val)
 
+def get_col_name(col_name):
+    if "." in col_name:
+        return str("`" + col_name + "`")
+    return col_name
 
 def process_dataset(filename):
     log("Started processing - " + filename)
@@ -54,6 +59,7 @@ def process_dataset(filename):
     count_non_null_vals = input_data.select([count(when(col(get_col_name(column_name)).isNotNull(), get_col_name(column_name))).alias(column_name) for column_name in column_list])
     
     for column_name in column_list:
+        column_data = {}
         int_flag = real_flag = date_flag = False
         dts_df = None
         df_list = []
@@ -89,10 +95,10 @@ def process_dataset(filename):
             df_list = dts_df.collect()
 
         text_rdd = dt_rdd.filter(lambda x: x[0]=="TEXT").map(lambda x: (x[1],len(x[1])))
-        longest_length = text_RDD.distinct().sortBy(lambda x: x[1]).top(5, key=lambda x: x[1])
-        shortest_length = text_RDD.distinct().sortBy(lambda x: x[1]).take(5)
-        text_count = text_RDD.count()
-        average_length = text_RDD.map(lambda x: x[1]).mean()
+        longest_length = text_rdd.distinct().sortBy(lambda x: x[1]).top(5, key=lambda x: x[1])
+        shortest_length = text_rdd.distinct().sortBy(lambda x: x[1]).take(5)
+        text_count = text_rdd.count()
+        average_length = text_rdd.map(lambda x: x[1]).mean()
 
         freq_val_tuples = col_rdd.map(lambda x: (x,1)).reduceByKey(lambda x,y: x+y).sortBy(lambda x: x[1], ascending=False).take(5)
         column_data["column_name"] = column_name
@@ -140,6 +146,6 @@ for dataset_name in dataset_names:
         with open('task1.json', 'w') as out_file:
             json.dump(final_merged_json, out_file)
 
-with open('task1.json', 'w') as out_file:
+with open('task100.json', 'w') as out_file:
     json.dump(final_merged_json, out_file)
 
