@@ -102,14 +102,18 @@ def process_dataset(filename):
             dt_dict["count"] = int(ser.count())
             if j == "TEXT":
                 text_RDD = sc.parallelize(ser.tolist())
-                text_RDD = text_RDD.map(lambda x: (x.lower(), len(x)))
+                text_RDD = text_RDD.map(lambda x: (x, len(x)))
                 longest_length = text_RDD.distinct().sortBy(lambda x: x[1]).top(5, key=lambda x: x[1])
                 shortest_length = text_RDD.distinct().sortBy(lambda x: x[1]).take(5)
                 dt_dict["shortest_values"] = [k[0] for k in shortest_length]
                 dt_dict["longest_values"] = [k[0] for k in longest_length]
             if j == "DATE/TIME":
-                dt_dict["max_value"] = str(ser.max())
-                dt_dict["min_value"] = str(ser.min())
+                time_RDD = sc.parallelize(ser.tolist())
+                time_RDD = time_RDD.map(lambda x: (x, parse(x)))
+                max_val = time_RDD.distinct().sortBy(lambda x: x[1]).top(1, key=lambda x: x[1])
+                min_val = time_RDD.distinct().sortBy(lambda x: x[1]).take(1)
+                dt_dict["max_value"] = max_val[0][0]
+                dt_dict["min_value"] = min_val[0][0]
             if j ==  "INTEGER (LONG)":
                 dt_dict["max_value"] = int(ser.max())
                 dt_dict["min_value"] = int(ser.min())
@@ -149,12 +153,14 @@ count_processed_files = 0
 with open('dataset_names_new.txt', 'r') as f:
     dataset_names = f.read().split(", ")
 
+#dataset_names = [sys.argv[1]]
 for dataset_name in dataset_names:
     output_json = {}
     try:
         output_json = process_dataset(dataset_name)
     except Exception as e:
         logError("Exception occured while processing - " + dataset_name + str(e))
+        continue
     #output_json = process_dataset(dataset_name)
     final_merged_json.append(output_json)
     log("Processed dataset - " + dataset_name)
