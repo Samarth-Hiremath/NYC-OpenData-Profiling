@@ -32,13 +32,14 @@ def check_float(val):
         return False
 
 def is_date(string):
+    if not re.match('^[0-9]{1,2},[0-9]{1,2},(1[6-9])?[0-9]{2}$\|^(1[6-9])?[0-9]{2},[0-9]{1,2},[0-9]{1,2}$', string):
+        return False
     try:
         parse(string, fuzzy=False)
         return True
     except:
         return False
 
-# TODO check commas in int and float
 def return_data_types(val):
     if re.match('[-+]?[0-9]+$', val):
         return "INTEGER (LONG)", int(val)
