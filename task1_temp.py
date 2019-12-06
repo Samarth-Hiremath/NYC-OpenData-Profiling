@@ -37,7 +37,7 @@ def check_float(val):
         return False
 
 def is_date(string):
-    if re.match('^[0-9]*,([0-9]{3},)?[0-9]{3}$|^[0-9]+,[0-9]+$|^[0-9]+,([0-9]{1,3},)*[0-9]{1,3}$', string):
+    if re.match('^[0-9]*,([0-9]{3},)?[0-9]{3}$|^[0-9]+,[0-9]+$|^[0-9]+,([0-9]{1,3},)*[0-9]{1,3}$', string.strip()):
         return False
     try:
         parse(string, fuzzy=False)
