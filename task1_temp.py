@@ -1,14 +1,17 @@
 import pyspark
-from pyspark import SparkContext
-
-from pyspark.sql import SparkSession
 import json
 import sys
 import re
+import math
 import pandas as pd
-from pyspark.sql import functions as F
-from pyspark.sql.functions import isnan, when, count, col
 from dateutil.parser import parse
+from datetime import datetime
+from pyspark import SparkContext
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql import Row
+from pyspark.sql.functions import isnan, when, count, col
+
 
 sc = SparkContext()
 
@@ -19,10 +22,12 @@ spark = SparkSession \
         .getOrCreate()
 
 def log(msg):
-    print("INFO: " + str(msg))
+    date_timestamp = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+    print(date_timestamp + " INFO: " + str(msg.encode(sys.stdout.encoding, 'ignore').decode()))
 
 def logError(msg):
-    print("ERROR: " + str(msg))
+    date_timestamp = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+    print(date_timestamp + " ERROR: " + str(msg.encode(sys.stdout.encoding, 'ignore').decode()))
 
 def check_float(val):
     try:
@@ -160,7 +165,10 @@ for dataset_name in dataset_names:
     try:
         output_json = process_dataset(dataset_name)
     except Exception as e:
-        logError("Exception occured while processing - " + dataset_name + str(e))
+        try:
+            logError("Exception occured while processing - " + dataset_name + "\n" + str(e))
+        except Exception as e2:
+            logError("Exception occured while processing - " + dataset_name)
         continue
     #output_json = process_dataset(dataset_name)
     final_merged_json.append(output_json)
