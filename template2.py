@@ -72,7 +72,7 @@ def process_dataset(filename):
         dts_df = None
         df_list = []
         col_df = input_data.select(get_col_name(column_name))
-        col_rdd = col_df.dropna().rdd.map(lambda x: x[column_name])
+        col_rdd = col_df.rdd.map(lambda x: x[(column_name)]).filter(lambda x: x!=None)
         dt_rdd = col_rdd.map(lambda x: return_data_types(x))
         int_rdd = dt_rdd.filter(lambda x: x[0]=="INTEGER (LONG)").map(lambda x: Row(value=x[1]))
         if not int_rdd.isEmpty():
@@ -163,7 +163,7 @@ count_processed_files = 0
 with open('dataset_names_new.txt', 'r') as f:
     dataset_names = f.read().split(", ")
 
-dataset_names = [sys.argv[1]]
+# dataset_names = [sys.argv[1]]
 for dataset_name in dataset_names:
     output_json = {}
     try:
