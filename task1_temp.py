@@ -87,8 +87,8 @@ def process_dataset(filename):
     for column_name in column_list:
         column_data = {}
         fin_dict = {}
-        col_df = input_data.select(get_col_name(column_name)).toPandas()[column_name]
-        col_rdd = sc.parallelize(col_df)
+        col_df = input_data.select(get_col_name(column_name)).toPandas()[column_name].dropna()
+        col_rdd = sc.parallelize(col_df).filter(lambda x: x!=None)
         freq_val_tuples = col_rdd.map(lambda x: (x,1)).reduceByKey(lambda x,y: x+y).sortBy(lambda x: x[1], ascending=False).take(5)
         col_dict = {}
         for i in col_df:
@@ -103,32 +103,30 @@ def process_dataset(filename):
         fin_dict["data_types"] = []
         for j in col_dict.keys():
             dt_dict = {}
-            ser = pd.Series(col_dict[j])
+            rdd = sc.parallelize(col_dict[j])
             dt_dict["type"] = j
-            dt_dict["count"] = int(ser.count())
+            dt_dict["count"] = int(rdd.count())
+            if j ==  "INTEGER (LONG)":
+                dt_dict["max_value"] = int(rdd.max())
+                dt_dict["min_value"] = int(rdd.min())
+            if j == "REAL":
+                dt_dict["max_value"] = float(rdd.max()) # Any specific reason why max is int?
+                dt_dict["min_value"] = float(rdd.min())
+            if j ==  "INTEGER (LONG)" or  j == "REAL":
+                dt_dict["mean"] = float(rdd.mean())
+                dt_dict["stddev"] = float(rdd.stdev())
             if j == "TEXT":
-                text_RDD = sc.parallelize(ser.tolist())
-                text_RDD = text_RDD.map(lambda x: (x, len(x)))
-                longest_length = text_RDD.distinct().sortBy(lambda x: x[1]).top(5, key=lambda x: x[1])
-                shortest_length = text_RDD.distinct().sortBy(lambda x: x[1]).take(5)
+                rdd = rdd.map(lambda x: (x, len(x))).distinct().sortBy(lambda x: x[1])
+                longest_length = rdd.top(5, key=lambda x: x[1])
+                shortest_length = rdd.take(5)
                 dt_dict["shortest_values"] = [k[0] for k in shortest_length]
                 dt_dict["longest_values"] = [k[0] for k in longest_length]
             if j == "DATE/TIME":
-                time_RDD = sc.parallelize(ser.tolist())
-                time_RDD = time_RDD.map(lambda x: (x, parse(x)))
-                max_val = time_RDD.distinct().sortBy(lambda x: x[1]).top(1, key=lambda x: x[1])
-                min_val = time_RDD.distinct().sortBy(lambda x: x[1]).take(1)
+                rdd = rdd.map(lambda x: (x, parse(x))).distinct().sortBy(lambda x: x[1])
+                max_val = rdd.top(1, key=lambda x: x[1])
+                min_val = rdd.take(1)
                 dt_dict["max_value"] = max_val[0][0]
                 dt_dict["min_value"] = min_val[0][0]
-            if j ==  "INTEGER (LONG)":
-                dt_dict["max_value"] = int(ser.max())
-                dt_dict["min_value"] = int(ser.min())
-            if j == "REAL":
-                dt_dict["max_value"] = int(ser.max()) # Any specific reason why max is int?
-                dt_dict["min_value"] = float(ser.min())
-            if j ==  "INTEGER (LONG)" or  j == "REAL":
-                dt_dict["mean"] = float(ser.mean())
-                dt_dict["stddev"] = float(ser.std(ddof=1 if ser.count() > 1 else 0))
             fin_dict["data_types"].append(dt_dict)
         column_data["column_name"] = column_name
         column_data["number_non_empty_cells"] = int(count_non_null_vals.collect()[0][column_name])
@@ -177,9 +175,9 @@ for dataset_name in dataset_names:
     if (count_processed_files == 10):
         count_processed_files = 0
         log("Writing json to file")
-        with open('task1.json', 'w') as out_file:
+        with open('task1_fin.json', 'w') as out_file:
             json.dump(final_merged_json, out_file)
 
-with open('task1.json', 'w') as out_file:
+with open('task1_fin.json', 'w') as out_file:
     json.dump(final_merged_json, out_file)
 
