@@ -154,10 +154,20 @@ def process_dataset(filename):
 
 final_merged_json = []
 count_processed_files = 0
-with open('dataset_names_new.txt', 'r') as f:
-    dataset_names = f.read().split(", ")
+dataset_names = []
+# TODO: Control I/O variations and arguments through shell script
+if re.match('.*\.txt$', sys.argv[1]):
+    input_file = sys.argv[1]
+    log("Reading file: " + input_file)
+    with open(input_file, 'r') as f:
+        dataset_names = f.read().splitlines();
+else:
+    dataset_names = sys.argv[1:-1]
+    log("Received " + str(len(dataset_names)) + " filepaths as input") 
 
-#dataset_names = [sys.argv[1]]
+output_file = sys.argv[-1]
+log("Writing output to " + output_file)
+
 for dataset_name in dataset_names:
     output_json = {}
     try:
@@ -175,9 +185,9 @@ for dataset_name in dataset_names:
     if (count_processed_files == 10):
         count_processed_files = 0
         log("Writing json to file")
-        with open('task1_fin.json', 'w') as out_file:
+        with open(output_file, 'w') as out_file:
             json.dump(final_merged_json, out_file)
 
-with open('task1_fin.json', 'w') as out_file:
+with open(output_file, 'w') as out_file:
     json.dump(final_merged_json, out_file)
 
