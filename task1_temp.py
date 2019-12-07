@@ -40,7 +40,7 @@ def is_date(string):
     if re.match('^[0-9]*,([0-9]{3},)?[0-9]{3}$|^[0-9]+,[0-9]+$|^[0-9]+,([0-9]{1,3},)*[0-9]{1,3}$', string.strip()):
         return False
     try:
-        parse(string, fuzzy=False)
+        parse(string, fuzzy=False, ignoretz=True)
         return True
     except:
         return False
@@ -121,8 +121,9 @@ def process_dataset(filename):
                 shortest_length = rdd.take(5)
                 dt_dict["shortest_values"] = [k[0] for k in shortest_length]
                 dt_dict["longest_values"] = [k[0] for k in longest_length]
+                dt_dict["average_length"] = float(rdd.map(lambda x: x[1]).mean())
             if j == "DATE/TIME":
-                rdd = rdd.map(lambda x: (x, parse(x))).distinct().sortBy(lambda x: x[1])
+                rdd = rdd.map(lambda x: (x, parse(x, fuzzy=False, ignoretz=True))).distinct().sortBy(lambda x: x[1])
                 max_val = rdd.top(1, key=lambda x: x[1])
                 min_val = rdd.take(1)
                 dt_dict["max_value"] = max_val[0][0]
