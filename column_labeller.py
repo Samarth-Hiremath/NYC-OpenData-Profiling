@@ -50,11 +50,17 @@ for dataset_name in dataset_names:
     #dataset_name='/user/hm74/NYCColumns/5694-9szk.Business_Website_or_Other_URL.txt.gz'
     log("Started processing - " + dataset_name)
     input_data = spark.read.format('csv').options(delimiter='\t').load(dataset_name)
-    input_data.distinct().show(50)
-    column_label = input()
+    try:
+        input_data.distinct().show(50)
+    except Exception as e:
+        logError("Skipping " + dataset_name)
+        continue
+    column_label = input("Column Label:")
     #output_json = process_dataset(dataset_name)
     log("Column label - " + column_label)
     log("Processed dataset - " + dataset_name)
     output_dict[dataset_name] = column_label
     with open("columns_labelled.txt", "a+") as f:
-        f.write(dataset_name + "\t" + column_label)
+        f.write(dataset_name + "\t" + column_label + "\n")
+
+
