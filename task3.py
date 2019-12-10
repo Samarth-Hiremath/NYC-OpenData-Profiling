@@ -44,7 +44,7 @@ def create_neighbourhoods_dict():
 neighbourhoods_dict = create_neighbourhoods_dict()
 
 def clean_complaint_types(string):
-    if re.match('^[a-zA-Z]+$', string):
+    if re.match('^[a-zA-Z]+[A-Za-z /-]*[a-zA-Z]$', string):
         return string.lower()
     return ''
 
