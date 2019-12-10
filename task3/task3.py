@@ -17,7 +17,7 @@ sc = SparkContext()
 
 spark = SparkSession \
         .builder \
-        .appName("hw3") \
+        .appName("big_data_project") \
         .config("spark.some.config.option", "some-value") \
         .getOrCreate()
 
@@ -93,21 +93,21 @@ required_data = input_data.select('Unique Key', 'Created Date', 'Closed Date', '
 count_by_borough = required_data.groupBy('Complaint Type', 'Borough').agg(F.count('Complaint Type').alias('count')).orderBy(['Borough', 'count'], ascending=[1,0])
 window = Window.partitionBy('Borough').orderBy(F.desc('count'))
 count_by_borough_ranked = count_by_borough.select('*', F.rank().over(window).alias('rank')).filter('rank < 4')
-count_by_borough_ranked.write.csv("nap493_top3_complaints.csv")
+count_by_borough_ranked.write.csv("task3/top3_complaints.csv")
 # Top 3 complaints in each borough stored in count_by_borough_ranked
 
 complaints_over_time = required_data.select('Unique Key', trim_date_handler('Created Date').alias('Created Date'), trim_date_handler('Closed Date').alias('Closed Date'), 'Complaint Type', 'Borough')
 complaints_over_time_top3 = complaints_over_time.join(count_by_borough_ranked.select('Complaint Type', 'Borough', 'rank'), on=['Complaint Type', 'Borough'])
 complaints_over_time_top3 = complaints_over_time_top3.groupBy('Created Date', 'Complaint Type', 'Borough').agg(F.count('*').alias('count'))
 
-complaints_over_time_top3.select('*').orderBy(['Borough', 'Complaint Type', 'Created Date']).write.csv("nap493_distribution_complaints_over_time.csv")
+complaints_over_time_top3.select('*').orderBy(['Borough', 'Complaint Type', 'Created Date']).write.csv("task3/distribution_complaints_over_time.csv")
 
 due_date_exceeded = required_data.select(trim_date_handler('Closed Date').alias('Closed Date'), trim_date_handler('Due Date').alias('Due Date'), 'Borough').filter(col('Closed Date') > col('Due Date')).groupBy('Borough').agg(F.count('Borough').alias('count_exceeded'))
 total_count = required_data.select('Borough').groupBy('Borough').agg(F.count('Borough').alias('count'))
 due_date_exceeded_result = due_date_exceeded.join(total_count, on='Borough')
 due_date_exceeded_result = due_date_exceeded_result.withColumn('Percentage of complaints that did not meet due date', compute_percentage('count_exceeded', 'count'))
 
-due_date_exceeded_result.select('*').orderBy('Percentage of complaints that did not meet due date').write.csv("nap493_due_date_exceeded_boroughwise.csv")
+due_date_exceeded_result.select('*').orderBy('Percentage of complaints that did not meet due date').write.csv("task3/due_date_exceeded_boroughwise.csv")
 
 agency_wise_complaints_borough = required_data.select('Agency', 'Borough', trim_date_handler('Closed Date').alias('Closed Date'), trim_date_handler('Due Date').alias('Due Date'))
 top3_agencies_count = agency_wise_complaints_borough.groupBy('Agency', 'Borough').agg(F.count('Agency').alias('count')).orderBy(['Borough', 'count'], ascending=[1,0])
@@ -118,13 +118,11 @@ agency_wise_total_count = agency_wise_complaints_borough.select('Agency').groupB
 agency_wise_due_date_exceeded_result = agency_wise_due_date_exceeded.join(agency_wise_total_count, on='Agency')
 agency_wise_due_date_exceeded_result = agency_wise_due_date_exceeded_result.withColumn('Percentage of complaints that did not meet due date', compute_percentage('count_exceeded', 'count'))
 
-top3_agencies_count.write.csv("nap493_top3_agencies.csv")
-agency_wise_due_date_exceeded_result.select('*').orderBy('Percentage of complaints that did not meet due date').write.csv("nap493_due_date_exceeded_agencywise.csv")
+top3_agencies_count.write.csv("task3/top3_agencies.csv")
+agency_wise_due_date_exceeded_result.select('*').orderBy('Percentage of complaints that did not meet due date').write.csv("task3/due_date_exceeded_agencywise.csv")
 
 #top3_agencies_count.show()
 #agency_wise_due_date_exceeded_result.show()
 
 log("Processed dataset - " + filename)
-#input_data_with_count = input_data.join(count_by_borough_count, on=["Complaint_Type_311", "Incident_Address_Borough"])
 
-#omplaints_by_date = input_data_with_count.select('Complaint_Number', 'Incident_Address_Borough', 'Complaint_Type_311', 'Date_Received').orderBy(['Incident_Address_Borough', 'Complaint_Type_311', 'Complaint_Number']).dropna()
