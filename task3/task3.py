@@ -1,23 +1,21 @@
 import pyspark
-from pyspark import SparkContext
-
-from pyspark.sql import SparkSession
 import json
 import sys
 import re
-import pandas as pd
+
+from pyspark import SparkContext
+from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
-from pyspark.sql.functions import isnan, when, count, col
+from pyspark.sql.functions import col
 from pyspark.sql.types import StringType, FloatType
-from dateutil.parser import parse
-from datetime import datetime
 from pyspark.sql.window import Window
+from datetime import datetime
 
 sc = SparkContext()
 
 spark = SparkSession \
         .builder \
-        .appName("big_data_project") \
+        .appName("task3") \
         .config("spark.some.config.option", "some-value") \
         .getOrCreate()
 

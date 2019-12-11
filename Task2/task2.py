@@ -19,7 +19,7 @@ sc = SparkContext()
 sqlContext = SQLContext(sc)
 spark = SparkSession \
         .builder \
-        .appName("hw3") \
+        .appName("task2") \
         .config("spark.some.config.option", "some-value") \
         .getOrCreate()
 
@@ -34,7 +34,9 @@ all_filenames = ['5694-9szk.Business_Website_or_Other_URL.txt.gz', 'uwyv-629c.St
 # city preprocessing
 us_cities_df = spark.read.load("/user/ts3813/uscities.csv",format="csv", delimiter=",", inferSchema="true", header="true")
 nyc_cities_df = us_cities_df.filter(us_cities_df.state_id=='NY').select('city')
-lower_udf = udf(lambda x: x.lower(), StringType())
+
+lower_udf = udf(lambda x: x.lower() if x else '', StringType())
+
 udf_1 = udf(lambda x: 1, IntegerType())
 nyc_cities_df = nyc_cities_df.withColumn('city', lower_udf('city'))
 nyc_cities_df = nyc_cities_df.withColumn('city_bool', udf_1('city'))
@@ -46,19 +48,91 @@ w_soundex_vals = [w_soundex[0] for w_soundex in w_name_lower.select('w_name_soun
 
 phoneNumRegex = re.compile(r'(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})')
 
+school_levels= ['Preschool','pre-kindergarten','elementary school','middle school','senior school','junior high school','high school','middle school','K-8','K-1','K-2','K-3','K-4','K-5','K-6','K-7']
+school_levels_df = spark.createDataFrame(school_levels, StringType())
+school_levels_df = school_levels_df.withColumn('levels', lower_udf('value'))
+school_levels_df = school_levels_df.withColumn('school_level_bool', udf_1('levels'))
+
+
+boroughs=['the bronx','staten island','manhattan','brooklyn','queens','bronx', 'K','B','R','Q','M']
+boroughs_df=spark.createDataFrame(boroughs,StringType())
+boroughs_df = boroughs_df.withColumn('levels', lower_udf('value'))
+boroughs_df = boroughs_df.withColumn('boroughs_bool', udf_1('levels'))
+
+area_of_study=['engineering', 'teaching', 'communications', 'animal ccience', 'science & math', 'law & government', 'architecture', 'business', 'culinary arts', 'performing arts', 'health profession', 'visual art & design', 'film/video', 'cosmetology', 'humanities & interdisciplinary', 'computer science & technology', 'project-based learning', 'hospitality, travel, & tourism', 'performing arts/visual art & design', 'environmental science', 'zoned']
+area_of_study_df=spark.createDataFrame(area_of_study,StringType())
+area_of_study_df = area_of_study_df.withColumn('levels', lower_udf('value'))
+area_of_study_df = area_of_study_df.withColumn('study_bool', udf_1('levels'))
+
+
+subject_in_school=['algebra','art','biology', 'calculus','chemistry','cinema','composition','craft','drawing','economics','economy','english','arts','geography','geometry','gym','history', 'humanities','language','literature','math','mathematics','music','painting','physical development','physics','science','social science','social studies','statistics']
+subject_in_school_df=spark.createDataFrame(subject_in_school,StringType())
+subject_in_school_df = subject_in_school_df.withColumn('levels', lower_udf('value'))
+subject_in_school_df = subject_in_school_df.withColumn('school_bool', udf_1('levels'))
+
+university_df=spark.read.load("/user/ts3813/universities.csv",format="csv", delimiter=",", inferSchema="true", header="true")
+university_df=university_df.select('Name')
+university_df = university_df.withColumn('levels', lower_udf('Name'))
+university_df = university_df.withColumn('university_bool', udf_1('levels'))
+
+car_makes_df = spark.read.load("/user/ts3813/car_makes_csv.csv",format="csv", delimiter=",", inferSchema="true", header="false")
+car_makes_df=car_makes_df.select('_c0')
+car_makes_df = car_makes_df.withColumn('levels', lower_udf('_c0'))
+car_makes_df = car_makes_df.withColumn('car_make_bool', udf_1('levels'))
+
+parks_playgrounds_df=spark.read.load("/user/ts3813/OpenData_ParksProperties.csv",format="csv", delimiter=",", inferSchema="true", header="true")
+parks_playgrounds_df=parks_playgrounds_df.select('Name311')
+parks_playgrounds_df = parks_playgrounds_df.withColumn('levels', lower_udf('Name311'))
+parks_playgrounds_df = parks_playgrounds_df.withColumn('parks_bool', udf_1('levels'))
+
+loc_df = sc.textFile("/user/ts3813/Type_of_Location.txt")
+loc_df=spark.createDataFrame(loc_df, StringType())
+loc_df = loc_df.withColumn('levels', lower_udf('value'))
+loc_df = loc_df.withColumn('loc_bool', udf_1('levels'))
+
+agency_df = spark.read.load("/user/ts3813/us_agency.csv",format="csv", delimiter=",", inferSchema="true", header="true")
+agency_df = agency_df.withColumn('levels', lower_udf('AGENCY NAME'))
+agency_df = agency_df.withColumn('agency_bool', udf_1('levels'))
+
+school_df = spark.read.load("/user/ts3813/schoolnames.csv",format="csv", delimiter=",", inferSchema="true", header="true")
+school_df = school_df.withColumn('levels', lower_udf('LOCATION_NAME'))
+school_df = school_df.withColumn('school_bool', udf_1('levels'))
+
+building_classification_df = spark.read.load("/user/nap493/Building_Classification_list.csv", format="csv", inferSchema="true")
+building_classification_df = building_classification_df.withColumn('levels', lower_udf('_c0'))
+building_classification_df = building_classification_df.withColumn('building_classification_bool', udf_1('levels'))
+
+neighbourhood_df = spark.read.load("/user/nap493/neighbourhood_list.csv", format="csv", inferSchema="true")
+neighbourhood_df = neighbourhood_df.withColumn('levels', lower_udf('_c0'))
+neighbourhood_df = neighbourhood_df.withColumn('neighbourhood_bool', udf_1('levels'))
+
+vehicle_type_df = spark.read.load("/user/nap493/vehicle_type_list.csv", format="csv", inferSchema="true")
+vehicle_type_df = vehicle_type_df.withColumn('levels', lower_udf('_c0'))
+vehicle_type_df = vehicle_type_df.withColumn('vehicle_type_bool', udf_1('levels'))
 
 def PersonStats(rdd):
 	total_data = stanford_ner_tagger.tag(rdd.map(lambda x: re.sub('\s','',x)).take(500))
-	print(total_data)
+	#print(total_data)
 	count_persons =len(list(filter(lambda x: x[1]=='PERSON', total_data)))
-	return {'semantic_type': 'Person', 'count':count_persons}
+	count_persons= rdd.count()*(count_persons/500)
+	return {'semantic_type': 'person_name', 'count':count_persons}
+
+
+def OrganisationStats(rdd):
+	total_data = stanford_ner_tagger.tag(rdd.map(lambda x: re.sub('\s','',x)).take(500))
+	#print(total_data)
+	count_business =len(list(filter(lambda x: x[1]=='ORGANISATION', total_data)))
+	count_business= rdd.count()*(count_business/500)
+	return {'semantic_type': 'business_name', 'count':count_business}
+
+
 
 def WebsiteStats(rdd):
 	websiteRegex = re.compile(r'^((ftp|http|https):\/\/)?(www.)?(?!.*(ftp|http|https|www.))[a-zA-Z0-9_-]+(\.[a-zA-Z]+)+((\/)[\w#]+)*(\/\w+\?[a-zA-Z0-9_]+=\w+(&[a-zA-Z0-9_]+=\w+)*)?$')
 	result = rdd.map(lambda x:	True	if	websiteRegex.match(x.lower())!=None	else	False).filter(lambda	x:	x==True)
 	total_count=rdd.count()
 	website_count= result.count()
-	return {'semantic_type': 'Website', 'count': website_count}
+	return {'semantic_type': 'website', 'count': website_count}
 
 def CityStats(rdd):
 	output_df = spark.createDataFrame(rdd, StringType())
@@ -73,7 +147,7 @@ def PhoneStats(rdd):
 	result = rdd.map(lambda x:      True    if      phoneNumRegex.match(x.lower())!=None     else    False).filter(lambda       x:      x==True)
 	total_count=rdd.count()
 	phone_count= result.count()
-	return {'semantic_type': 'Phone number', 'count': phone_count}
+	return {'semantic_type': 'phone_number', 'count': phone_count}
 
 def LatLongStats(rdd):
 	latLongRegex = re.compile(r'(^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$)')
@@ -81,7 +155,14 @@ def LatLongStats(rdd):
 	result = rdd.map(lambda x:      True    if      latLongRegex.match(x.lower())!=None     else    False).filter(lambda       x:      x==True)
 	total_count=rdd.count()
 	latlong_count= result.count()
-	return {'semantic_type': 'Latitude Longitude', 'count': latlong_count}
+	return {'semantic_type': 'lat_lon_cord', 'count': latlong_count}
+
+def ZipCode(rdd):
+	ZipCodeRegex = re.compile(r'(^[0-9]{5}(?:-[0-9]{4})?$)')
+	result=rdd.map(lambda x: True	if zipCodeRegex.match(x)!=None	else	False).filter(lambda	x:	x==True)
+	total_count=rdd.count()
+	zipcode_count=result.count()
+	return {'semantic_type':'zip_code','count':zipcode_count}
 
 def soundex_lookup(x):
     for soundex_val in w_soundex_vals:
@@ -91,24 +172,151 @@ def soundex_lookup(x):
 
 def ColorStats(rdd):
 	total_count = rdd.count()
+
 	analyse_color_df = spark.createDataFrame(rdd, StringType())
 	a_name=analyse_color_df.select("value")
 	soundex_udf = udf(lambda x: soundex_lookup(x) , StringType())
 	analyse_color_df = analyse_color_df.withColumn('color_lower', lower_udf('value')).withColumn('color_soundex', soundex('color_lower'))
 	analyse_color_df = analyse_color_df.withColumn('isColor', soundex_udf('color_soundex'))
 	color_count = analyse_color_df.rdd.filter(lambda x: x[3]=='true').count()
-	return {'semantic_type': 'Color', 'count': color_count}
+	return {'semantic_type': 'color', 'count': color_count}
+
+def SchoolLevelStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(school_levels_df, output_df['value'] == school_levels_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+	return {'semantic_type': 'school_level', 'count': result_count}
+	
+def BoroughStats(rdd):
+        output_df=spark.createDataFrame(rdd, StringType())
+        output_df=output_df.withColumn('value',lower_udf('value'))
+        total_count=output_df.rdd.count()
+        output_df=output_df.join(boroughs_df, output_df['value'] == boroughs_df['levels'], how='left')
+        result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+        return {'semantic_type': 'borough', 'count': result_count}
+
+		 
+def UniversitiesStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(university_df, output_df['value'] == university_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+	return {'semantic_type': 'college_name', 'count': result_count}
+
+def BuildingClassificationStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))	
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(building_classification_df, output_df['value'] == building_classification_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[2]==1).count()
+	return {'semantic_type': 'building_classification', 'count': result_count}
+
+def CarMakesStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(car_makes_df, output_df['value'] == car_makes_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+	return {'semantic_type': 'car_make', 'count': result_count}
+
+
+def ParksStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(parks_playgrounds_df, output_df['value'] == parks_playgrounds_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+	return {'semantic_type': 'park_playground', 'count': result_count}
+
+
+def TypeoflocationStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(loc_df, output_df['value'] == loc_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+	return {'semantic_type': 'location_type', 'count': result_count}
+
+def AgencyStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(agency_df, output_df['value'] == agency_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+	return {'semantic_type': 'city_agency', 'count': result_count}
+
+
+def SchoolStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(school_df, output_df['value'] == school_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+	return {'semantic_type': 'school_name', 'count': result_count}
+
+def StreetStats(rdd):
+	streetRegex = re.compile(r'(avenue|lane|road|boulevard|drive|street|ave|dr|rd|blvd|ln|st)')
+	result = rdd.map(lambda x:      True    if      streetRegex.match(x.lower())!=None     else    False).filter(lambda       x:      x==True)
+	total_count=rdd.count()
+	street_count= result.count()
+	return {'semantic_type': 'street_name', 'count': street_count}
+
+def AreaOfStudiesStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(area_of_study_df, output_df['value'] == area_of_study_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+	return {'semantic_type': 'area_of_study', 'count': result_count}
+
+def SubjectInSchoolStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(subject_in_school_df, output_df['value'] == subject_in_school_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+	return {'semantic_type': 'subject_in_school', 'count': result_count}
+
+
+def VehicleTypeStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))	
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(vehicle_type_df, output_df['value'] == vehicle_type_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[2]==1).count()
+	return {'semantic_type': 'vehicle_type', 'count': result_count}
+
+def NeighbourhoodStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))	
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(neighbourhood_df, output_df['value'] == neighbourhood_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[2]==1).count()
+	return {'semantic_type': 'neighbourhood', 'count': result_count}
+
 
 for filename in all_filenames:
 	print('Processing file: {}'.format(filename))
+	final_json = [{'predicted_types': ['person_name', 'business_name', 'phone_number', 'address', 'street_name', 'city', 'neighborhood', 'lat_lon_cord', 'zip_code', 'borough', 'school_name', 
+'color', 'car_make', 'city_agency', 'area_of_study', 'subject_in_school', 'school_level', 'college_name', 'website', 'building_classification', 'vehicle_type', 'location_type', 'park_playground', 'other']}]
 	json_file_data = {}
 	
 	input_rdd = sc.textFile(os.path.join('/user/hm74/NYCColumns',filename))
 	input_rdd = input_rdd.map(lambda x: x.split('\t')[0])
 	
-	json_file_data["dataset_name"] = filename
+	json_file_data["column_name"] = filename.split('.')[1]
 	json_file_data['semantic_types'] = []
+		
+	#Phone stats
+	phone_stats = PhoneStats(input_rdd)
+	if len(phone_stats)>0:
+		json_file_data['semantic_types'].append(phone_stats)
 
+
+	
 	# person stats
 	person_stats = PersonStats(input_rdd)
 	if len(person_stats)>0:
@@ -135,11 +343,88 @@ for filename in all_filenames:
 		json_file_data['semantic_types'].append(latlong_stats)
 
 	# color
-	color_stats = ColorStats(input_rdd)
-	if len(color_stats)>0:
-		json_file_data['semantic_types'].append(color_stats)
-
+	if 'color' in filename.lower():
+		color_stats = ColorStats(input_rdd)
+		if len(color_stats)>0:
+			json_file_data['semantic_types'].append(color_stats)
 	
+
+	school_level_stats = SchoolLevelStats(input_rdd)
+	if len(school_level_stats)>0:
+		json_file_data['semantic_types'].append(school_level_stats)
+		
+	#Boroughs
+	borough_stats = BoroughStats(input_rdd)
+	if len(borough_stats)>0:
+		json_file_data['semantic_types'].append(borough_stats) 
+		
+	#Univeristy
+	university_stats = UniversitiesStats(input_rdd)
+	if len(university_stats)>0:
+		json_file_data['semantic_types'].append(university_stats)
+
+	#Car Makes
+	car_makes_stats = CarMakesStats(input_rdd)
+	if len(car_makes_stats)>0:
+		json_file_data['semantic_types'].append(car_makes_stats)
+
+	#Park Stats
+	park_stats = ParksStats(input_rdd)
+	if len(park_stats)>0:
+		json_file_data['semantic_types'].append(park_stats)
+	
+	#Type pf location
+	location_stats = TypeoflocationStats(input_rdd)
+	if len(location_stats)>0:
+		json_file_data['semantic_types'].append(location_stats)	
+	
+	#Business Name
+	business_stats = OrganisationStats(input_rdd)
+	if len(business_stats)>0:
+		json_file_data['semantic_types'].append(business_stats)
+
+	#Agency Name
+	agency_stats = AgencyStats(input_rdd)
+	if len(agency_stats)>0:
+		json_file_data['semantic_types'].append(agency_stats)
+
+	#school Names
+	school_stats = SchoolStats(input_rdd)
+	if len(school_stats)>0:
+		 json_file_data['semantic_types'].append(school_stats)
+
+	#Street Names
+	street_stats = StreetStats(input_rdd)
+	if len(street_stats)>0:
+		json_file_data['semantic_types'].append(street_stats)
+	
+	#Area of study
+	study_stats = AreaOfStudiesStats(input_rdd)
+	if len(study_stats)>0:
+		json_file_data['semantic_types'].append(study_stats)
+
+	#Subject In school
+	subject_stats = SubjectInSchoolStats(input_rdd)
+	if len(subject_stats)>0:
+		json_file_data['semantic_types'].append(subject_stats)
+
+	#Vehicle Type
+	vehicle_type_stats = VehicleTypeStats(input_rdd)
+	if len(vehicle_type_stats)>0:
+		json_file_data['semantic_types'].append(vehicle_type_stats)
+
+	#Neighbourhood
+	neighbourhood_stats = NeighbourhoodStats(input_rdd)
+	if len(neighbourhood_stats)>0:
+		json_file_data['semantic_types'].append(neighbourhood_stats)
+	
+	#Building Classification
+	building_classification_stats = BuildingClassificationStats(input_rdd)
+	if len(building_classification_stats)>0:
+		json_file_data['semantic_types'].append(building_classification_stats)
+
+	final_json.append(json_file_data)
 	with open('output/{}.json'.format(filename), 'w') as f:
-		f.write(json.dumps(json_file_data, indent=4, separators=(',',':')))
+		f.write(json.dumps(final_json, indent=4, separators=(',',':')))
+
 
