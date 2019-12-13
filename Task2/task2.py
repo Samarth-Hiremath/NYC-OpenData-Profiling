@@ -39,6 +39,7 @@ lower_udf = udf(lambda x: x.lower() if x else '', StringType())
 
 udf_1 = udf(lambda x: 1, IntegerType())
 nyc_cities_df = nyc_cities_df.withColumn('city', lower_udf('city'))
+nyc_cities_df = nyc_cities_df.filter('city not in ("the bronx","staten island","manhattan","brooklyn","queens","bronx", "K","B","R","Q","M")')
 nyc_cities_df = nyc_cities_df.withColumn('city_bool', udf_1('city'))
 wiki_colors_df = spark.read.load("/user/ts3813/wikipedia_color_names.csv",format="csv", delimiter=",", inferSchema="true", header="true")     
 w_name = wiki_colors_df.select("Name")
@@ -59,7 +60,7 @@ boroughs_df=spark.createDataFrame(boroughs,StringType())
 boroughs_df = boroughs_df.withColumn('levels', lower_udf('value'))
 boroughs_df = boroughs_df.withColumn('boroughs_bool', udf_1('levels'))
 
-area_of_study=['engineering', 'teaching', 'communications', 'animal ccience', 'science & math', 'law & government', 'architecture', 'business', 'culinary arts', 'performing arts', 'health profession', 'visual art & design', 'film/video', 'cosmetology', 'humanities & interdisciplinary', 'computer science & technology', 'project-based learning', 'hospitality, travel, & tourism', 'performing arts/visual art & design', 'environmental science', 'zoned']
+area_of_study=['engineering', 'teaching', 'communications', 'animal science', 'science & math', 'law & government', 'architecture', 'business', 'culinary arts', 'performing arts', 'health profession', 'visual art & design', 'film/video', 'cosmetology', 'humanities & interdisciplinary', 'computer science & technology', 'project-based learning', 'hospitality, travel, & tourism', 'performing arts/visual art & design', 'environmental science', 'zoned']
 area_of_study_df=spark.createDataFrame(area_of_study,StringType())
 area_of_study_df = area_of_study_df.withColumn('levels', lower_udf('value'))
 area_of_study_df = area_of_study_df.withColumn('study_bool', udf_1('levels'))
@@ -211,7 +212,7 @@ def BuildingClassificationStats(rdd):
 	output_df=output_df.withColumn('value',lower_udf('value'))	
 	total_count=output_df.rdd.count()
 	output_df=output_df.join(building_classification_df, output_df['value'] == building_classification_df['levels'], how='left')
-	result_count=output_df.rdd.filter(lambda x: x[2]==1).count()
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
 	return {'semantic_type': 'building_classification', 'count': result_count}
 
 def CarMakesStats(rdd):
@@ -286,7 +287,7 @@ def VehicleTypeStats(rdd):
 	output_df=output_df.withColumn('value',lower_udf('value'))	
 	total_count=output_df.rdd.count()
 	output_df=output_df.join(vehicle_type_df, output_df['value'] == vehicle_type_df['levels'], how='left')
-	result_count=output_df.rdd.filter(lambda x: x[2]==1).count()
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
 	return {'semantic_type': 'vehicle_type', 'count': result_count}
 
 def NeighbourhoodStats(rdd):
@@ -294,7 +295,7 @@ def NeighbourhoodStats(rdd):
 	output_df=output_df.withColumn('value',lower_udf('value'))	
 	total_count=output_df.rdd.count()
 	output_df=output_df.join(neighbourhood_df, output_df['value'] == neighbourhood_df['levels'], how='left')
-	result_count=output_df.rdd.filter(lambda x: x[2]==1).count()
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
 	return {'semantic_type': 'neighbourhood', 'count': result_count}
 
 
