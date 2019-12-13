@@ -41,7 +41,7 @@ udf_1 = udf(lambda x: 1, IntegerType())
 nyc_cities_df = nyc_cities_df.withColumn('city', lower_udf('city'))
 nyc_cities_df = nyc_cities_df.filter('city not in ("the bronx","staten island","manhattan","brooklyn","queens","bronx", "K","B","R","Q","M")')
 nyc_cities_df = nyc_cities_df.withColumn('city_bool', udf_1('city'))
-wiki_colors_df = spark.read.load("/user/ts3813/wikipedia_color_names.csv",format="csv", delimiter=",", inferSchema="true", header="true")     
+wiki_colors_df = spark.read.load("/user/ts3813/wikipedia_color_names.csv",format="csv", delimiter=",", inferSchema="true", header="true")
 w_name = wiki_colors_df.select("Name")
 w_name_lower = w_name.withColumn('name_lower', lower_udf('Name'))
 w_name_lower = w_name_lower.withColumn('w_name_soundex', soundex('name_lower'))
@@ -160,7 +160,7 @@ def LatLongStats(rdd):
 
 def ZipCodeStats(rdd):
 	ZipCodeRegex = re.compile(r'(^[0-9]{5}(?:-[0-9]{4})?$)')
-	result=rdd.map(lambda x: True	if zipCodeRegex.match(x)!=None	else	False).filter(lambda	x:	x==True)
+	result=rdd.map(lambda x: True	if ZipCodeRegex.match(x)!=None	else	False).filter(lambda	x:	x==True)
 	total_count=rdd.count()
 	zipcode_count=result.count()
 	return {'semantic_type':'zip_code','count':zipcode_count}
@@ -189,16 +189,16 @@ def SchoolLevelStats(rdd):
 	output_df=output_df.join(school_levels_df, output_df['value'] == school_levels_df['levels'], how='left')
 	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
 	return {'semantic_type': 'school_level', 'count': result_count}
-	
-def BoroughStats(rdd):
-		output_df=spark.createDataFrame(rdd, StringType())
-		output_df=output_df.withColumn('value',lower_udf('value'))
-		total_count=output_df.rdd.count()
-		output_df=output_df.join(boroughs_df, output_df['value'] == boroughs_df['levels'], how='left')
-		result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
-		return {'semantic_type': 'borough', 'count': result_count}
 
-		 
+def BoroughStats(rdd):
+	output_df=spark.createDataFrame(rdd, StringType())
+	output_df=output_df.withColumn('value',lower_udf('value'))
+	total_count=output_df.rdd.count()
+	output_df=output_df.join(boroughs_df, output_df['value'] == boroughs_df['levels'], how='left')
+	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
+	return {'semantic_type': 'borough', 'count': result_count}
+
+
 def UniversitiesStats(rdd):
 	output_df=spark.createDataFrame(rdd, StringType())
 	output_df=output_df.withColumn('value',lower_udf('value'))
@@ -209,7 +209,7 @@ def UniversitiesStats(rdd):
 
 def BuildingClassificationStats(rdd):
 	output_df=spark.createDataFrame(rdd, StringType())
-	output_df=output_df.withColumn('value',lower_udf('value'))	
+	output_df=output_df.withColumn('value',lower_udf('value'))
 	total_count=output_df.rdd.count()
 	output_df=output_df.join(building_classification_df, output_df['value'] == building_classification_df['levels'], how='left')
 	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
@@ -258,9 +258,18 @@ def SchoolStats(rdd):
 	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
 	return {'semantic_type': 'school_name', 'count': result_count}
 
+
+def StreetFilter(x):
+	streetRegex = re.compile(r'(avenue|lane|road|boulevard|drive|street|ave|dr|rd|blvd|ln|st)', re.IGNORECASE)
+	addRegex =  re.compile(r'(^((!?iterrace|building|bldg|floor|suite|unit|room|ste|apt|appartment|box|simplex|fl|basement|dept|station|ground).)*$)')
+	#zprint(x)
+	if streetRegex.match(x.lower())!=None and addRegex.match(x.lower())!=None:
+		return True
+	else:
+		return False
+
 def StreetStats(rdd):
-	streetRegex = re.compile(r'(avenue|lane|road|boulevard|drive|street|ave|dr|rd|blvd|ln|st)')
-	result = rdd.map(lambda x:      True    if      streetRegex.match(x.lower())!=None     else    False).filter(lambda       x:      x==True)
+	result = rdd.map(StreetFilter).filter(lambda x: x == True)
 	total_count=rdd.count()
 	street_count= result.count()
 	return {'semantic_type': 'street_name', 'count': street_count}
@@ -284,7 +293,7 @@ def SubjectInSchoolStats(rdd):
 
 def VehicleTypeStats(rdd):
 	output_df=spark.createDataFrame(rdd, StringType())
-	output_df=output_df.withColumn('value',lower_udf('value'))	
+	output_df=output_df.withColumn('value',lower_udf('value'))
 	total_count=output_df.rdd.count()
 	output_df=output_df.join(vehicle_type_df, output_df['value'] == vehicle_type_df['levels'], how='left')
 	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
@@ -292,32 +301,39 @@ def VehicleTypeStats(rdd):
 
 def NeighbourhoodStats(rdd):
 	output_df=spark.createDataFrame(rdd, StringType())
-	output_df=output_df.withColumn('value',lower_udf('value'))	
+	output_df=output_df.withColumn('value',lower_udf('value'))
 	total_count=output_df.rdd.count()
 	output_df=output_df.join(neighbourhood_df, output_df['value'] == neighbourhood_df['levels'], how='left')
 	result_count=output_df.rdd.filter(lambda x: x[3]==1).count()
 	return {'semantic_type': 'neighbourhood', 'count': result_count}
 
+def AddressStats(rdd):
+	AddressRegex = re.compile(r'[0-9]+[ ,]+([\w.-]+ *(st|th|rd)?)+ *(avenue|av|ave|drive|dr|road|rd|boulevard|blvd|lane|ln|street|st|terrace|building|bldg|floor|suite|unit|room|ste|apt|appartment|box|simplex|fl|basement|dept|station|ground)\.?')
+	result = rdd.map(lambda x: True if AddressRegex.match(x) != None else False).filter(lambda x: x == True)
+	total_count = rdd.count()
+	add_count = result.count()
+	return {'semantic_type': 'address', 'count': add_count}
+
+
 
 for filename in all_filenames:
 	print('Processing file: {}'.format(filename))
-	final_json = [{'predicted_types': ['person_name', 'business_name', 'phone_number', 'address', 'street_name', 'city', 'neighborhood', 'lat_lon_cord', 'zip_code', 'borough', 'school_name', 
+	final_json = [{'predicted_types': ['person_name', 'business_name', 'phone_number', 'address', 'street_name', 'city', 'neighborhood', 'lat_lon_cord', 'zip_code', 'borough', 'school_name',
 'color', 'car_make', 'city_agency', 'area_of_study', 'subject_in_school', 'school_level', 'college_name', 'website', 'building_classification', 'vehicle_type', 'location_type', 'park_playground', 'other']}]
 	json_file_data = {}
-	
+
 	input_rdd = sc.textFile(os.path.join('/user/hm74/NYCColumns',filename))
 	input_rdd = input_rdd.map(lambda x: x.split('\t')[0])
-	
+
 	json_file_data["column_name"] = filename.split('.')[1]
 	json_file_data['semantic_types'] = []
-		
+
 	#Phone stats
 	phone_stats = PhoneStats(input_rdd)
 	if len(phone_stats)>0:
 		json_file_data['semantic_types'].append(phone_stats)
 
 
-	
 	# person stats
 	person_stats = PersonStats(input_rdd)
 	if len(person_stats)>0:
@@ -348,17 +364,17 @@ for filename in all_filenames:
 		color_stats = ColorStats(input_rdd)
 		if len(color_stats)>0:
 			json_file_data['semantic_types'].append(color_stats)
-	
 
+	#School level
 	school_level_stats = SchoolLevelStats(input_rdd)
 	if len(school_level_stats)>0:
 		json_file_data['semantic_types'].append(school_level_stats)
-		
+
 	#Boroughs
 	borough_stats = BoroughStats(input_rdd)
 	if len(borough_stats)>0:
-		json_file_data['semantic_types'].append(borough_stats) 
-		
+		json_file_data['semantic_types'].append(borough_stats)
+
 	#Univeristy
 	university_stats = UniversitiesStats(input_rdd)
 	if len(university_stats)>0:
@@ -373,12 +389,12 @@ for filename in all_filenames:
 	park_stats = ParksStats(input_rdd)
 	if len(park_stats)>0:
 		json_file_data['semantic_types'].append(park_stats)
-	
+
 	#Type pf location
 	location_stats = TypeoflocationStats(input_rdd)
 	if len(location_stats)>0:
-		json_file_data['semantic_types'].append(location_stats)	
-	
+		json_file_data['semantic_types'].append(location_stats)
+
 	#Business Name
 	business_stats = OrganisationStats(input_rdd)
 	if len(business_stats)>0:
@@ -392,13 +408,13 @@ for filename in all_filenames:
 	#school Names
 	school_stats = SchoolStats(input_rdd)
 	if len(school_stats)>0:
-		 json_file_data['semantic_types'].append(school_stats)
+		json_file_data['semantic_types'].append(school_stats)
 
 	#Street Names
 	street_stats = StreetStats(input_rdd)
 	if len(street_stats)>0:
 		json_file_data['semantic_types'].append(street_stats)
-	
+
 	#Area of study
 	study_stats = AreaOfStudiesStats(input_rdd)
 	if len(study_stats)>0:
@@ -418,14 +434,17 @@ for filename in all_filenames:
 	neighbourhood_stats = NeighbourhoodStats(input_rdd)
 	if len(neighbourhood_stats)>0:
 		json_file_data['semantic_types'].append(neighbourhood_stats)
-	
+
 	#Building Classification
 	building_classification_stats = BuildingClassificationStats(input_rdd)
 	if len(building_classification_stats)>0:
 		json_file_data['semantic_types'].append(building_classification_stats)
 
+	# Address Classification
+	address_classification_stats = AddressStats(input_rdd)
+	if len(address_classification_stats) > 0:
+		json_file_data['semantic_types'].append(address_classification_stats)
+
 	final_json.append(json_file_data)
 	with open('output/{}.json'.format(filename), 'w') as f:
 		f.write(json.dumps(final_json, indent=4, separators=(',',':')))
-
-
