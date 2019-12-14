@@ -315,11 +315,12 @@ def AddressStats(rdd):
 	return {'semantic_type': 'address', 'count': add_count}
 
 
+def len_check(stats):
+    return stats['count']
 
+final_json = [{'predicted_types': ['person_name', 'business_name', 'phone_number', 'address', 'street_name', 'city', 'neighborhood', 'lat_lon_cord', 'zip_code', 'borough', 'school_name', 'color', 'car_make', 'city_agency', 'area_of_study', 'subject_in_school', 'school_level', 'college_name', 'website', 'building_classification', 'vehicle_type', 'location_type', 'park_playground']}]
 for filename in all_filenames:
 	print('Processing file: {}'.format(filename))
-	final_json = [{'predicted_types': ['person_name', 'business_name', 'phone_number', 'address', 'street_name', 'city', 'neighborhood', 'lat_lon_cord', 'zip_code', 'borough', 'school_name',
-'color', 'car_make', 'city_agency', 'area_of_study', 'subject_in_school', 'school_level', 'college_name', 'website', 'building_classification', 'vehicle_type', 'location_type', 'park_playground', 'other']}]
 	json_file_data = {}
 
 	input_rdd = sc.textFile(os.path.join('/user/hm74/NYCColumns',filename))
@@ -330,121 +331,124 @@ for filename in all_filenames:
 
 	#Phone stats
 	phone_stats = PhoneStats(input_rdd)
-	if len(phone_stats)>0:
+	if len_check(phone_stats)>0:
 		json_file_data['semantic_types'].append(phone_stats)
 
 
 	# person stats
 	person_stats = PersonStats(input_rdd)
-	if len(person_stats)>0:
+	if len_check(person_stats)>0:
 		json_file_data['semantic_types'].append(person_stats)
 
 	# website stats
 	website_stats = WebsiteStats(input_rdd)
-	if len(website_stats)>0:
+	if len_check(website_stats)>0:
 		json_file_data['semantic_types'].append(website_stats)
 
 	# city stats
 	city_stats = CityStats(input_rdd)
-	if len(city_stats)>0:
+	if len_check(city_stats)>0:
 		json_file_data['semantic_types'].append(city_stats)
 
 	# Zip Code
 	zip_stats = ZipCodeStats(input_rdd)
-	if len(zip_stats)>0:
+	if len_check(zip_stats)>0:
 		json_file_data['semantic_types'].append(zip_stats)
 
 	# latlong
 	latlong_stats = LatLongStats(input_rdd)
-	if len(latlong_stats)>0:
+	if len_check(latlong_stats)>0:
 		json_file_data['semantic_types'].append(latlong_stats)
 
 	# color
 	if 'color' in filename.lower():
 		color_stats = ColorStats(input_rdd)
-		if len(color_stats)>0:
+		if len_check(color_stats)>0:
 			json_file_data['semantic_types'].append(color_stats)
 
 	#School level
 	school_level_stats = SchoolLevelStats(input_rdd)
-	if len(school_level_stats)>0:
+	if len_check(school_level_stats)>0:
 		json_file_data['semantic_types'].append(school_level_stats)
 
 	#Boroughs
 	borough_stats = BoroughStats(input_rdd)
-	if len(borough_stats)>0:
+	if len_check(borough_stats)>0:
 		json_file_data['semantic_types'].append(borough_stats)
 
 	#Univeristy
 	university_stats = UniversitiesStats(input_rdd)
-	if len(university_stats)>0:
+	if len_check(university_stats)>0:
 		json_file_data['semantic_types'].append(university_stats)
 
 	#Car Makes
 	car_makes_stats = CarMakesStats(input_rdd)
-	if len(car_makes_stats)>0:
+	if len_check(car_makes_stats)>0:
 		json_file_data['semantic_types'].append(car_makes_stats)
 
 	#Park Stats
 	park_stats = ParksStats(input_rdd)
-	if len(park_stats)>0:
+	if len_check(park_stats)>0:
 		json_file_data['semantic_types'].append(park_stats)
 
 	#Type pf location
 	location_stats = TypeoflocationStats(input_rdd)
-	if len(location_stats)>0:
+	if len_check(location_stats)>0:
 		json_file_data['semantic_types'].append(location_stats)
 
 	#Business Name
 	business_stats = OrganisationStats(input_rdd)
-	if len(business_stats)>0:
+	if len_check(business_stats)>0:
 		json_file_data['semantic_types'].append(business_stats)
 
 	#Agency Name
 	agency_stats = AgencyStats(input_rdd)
-	if len(agency_stats)>0:
+	if len_check(agency_stats)>0:
 		json_file_data['semantic_types'].append(agency_stats)
 
 	#school Names
 	school_stats = SchoolStats(input_rdd)
-	if len(school_stats)>0:
+	if len_check(school_stats)>0:
 		json_file_data['semantic_types'].append(school_stats)
 
 	#Street Names
 	street_stats = StreetStats(input_rdd)
-	if len(street_stats)>0:
+	if len_check(street_stats)>0:
 		json_file_data['semantic_types'].append(street_stats)
 
 	#Area of study
 	study_stats = AreaOfStudiesStats(input_rdd)
-	if len(study_stats)>0:
+	if len_check(study_stats)>0:
 		json_file_data['semantic_types'].append(study_stats)
 
 	#Subject In school
 	subject_stats = SubjectInSchoolStats(input_rdd)
-	if len(subject_stats)>0:
+	if len_check(subject_stats)>0:
 		json_file_data['semantic_types'].append(subject_stats)
 
 	#Vehicle Type
 	vehicle_type_stats = VehicleTypeStats(input_rdd)
-	if len(vehicle_type_stats)>0:
+	if len_check(vehicle_type_stats)>0:
 		json_file_data['semantic_types'].append(vehicle_type_stats)
 
 	#Neighbourhood
 	neighbourhood_stats = NeighbourhoodStats(input_rdd)
-	if len(neighbourhood_stats)>0:
+	if len_check(neighbourhood_stats)>0:
 		json_file_data['semantic_types'].append(neighbourhood_stats)
 
 	#Building Classification
 	building_classification_stats = BuildingClassificationStats(input_rdd)
-	if len(building_classification_stats)>0:
+	if len_check(building_classification_stats)>0:
 		json_file_data['semantic_types'].append(building_classification_stats)
 
 	# Address Classification
 	address_classification_stats = AddressStats(input_rdd)
-	if len(address_classification_stats) > 0:
+	if len_check(address_classification_stats) > 0:
 		json_file_data['semantic_types'].append(address_classification_stats)
 
 	final_json.append(json_file_data)
 	with open('output/{}.json'.format(filename), 'w') as f:
-		f.write(json.dumps(final_json, indent=4, separators=(',',':')))
+		f.write(json.dumps(json_file_data, indent=4, separators=(',',':')))
+
+with open('output/task2.json', 'w') as f:
+    f.write(json.dumps(final_json, indent=4, separators=(',',':')))
