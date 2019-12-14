@@ -29,13 +29,6 @@ def logError(msg):
     date_timestamp = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
     print(date_timestamp + " ERROR: " + str(msg.encode(sys.stdout.encoding, 'ignore').decode()))
 
-def check_float(val):
-    try:
-        float(val)
-        return True
-    except:
-        return False
-
 def is_date(string):
     if re.match('^[0-9]*,([0-9]{3},)?[0-9]{3}$|^[0-9]+,[0-9]+$|^[0-9]+,([0-9]{1,3},)*[0-9]{1,3}$', string.strip()):
         return False
