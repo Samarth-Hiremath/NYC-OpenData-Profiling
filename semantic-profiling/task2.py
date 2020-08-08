@@ -130,7 +130,7 @@ def OrganisationStats(rdd):
 
 def WebsiteStats(rdd):
 	websiteRegex = re.compile(r'^((ftp|http|https):\/\/)?(www.)?(?!.*(ftp|http|https|www.))[a-zA-Z0-9_-]+(\.[a-zA-Z]+)+((\/)[\w#]+)*(\/\w+\?[a-zA-Z0-9_]+=\w+(&[a-zA-Z0-9_]+=\w+)*)?$')
-	result = rdd.map(lambda x:	True	if	websiteRegex.match(x.lower())!=None	else	False).filter(lambda	x:	x==True)
+	result = rdd.map(lambda x: True if websiteRegex.match(x.lower())!=None else False).filter(lambda x: x==True)
 	total_count=rdd.count()
 	website_count= result.count()
 	return {'semantic_type': 'website', 'count': website_count}
